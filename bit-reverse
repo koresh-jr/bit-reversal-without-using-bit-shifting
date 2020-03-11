@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define ERROR_FILE_OPEN -3
+
+int i=0;
+char ReverseBits(char number)
+{
+//старый вариант с битовым смещением
+//number = (number & 0x55) << 1 | (number & 0xAA) >> 1;
+//number = (number & 0x33) << 2 | (number & 0xCC) >> 2;
+//number = (number & 0x0F) << 4 | (number & 0xF0) >> 4;
+
+//вариант с переменными без использования сдвига (думаю что возможно оптимизировать)
+
+//задаем каждой переменной значение каждого разряда
+  char a = number & 0x01;
+  char b = number & 0x02;
+  char c = number & 0x04;
+  char d = number & 0x08;
+  char e = number & 0x10;
+  char f = number & 0x20;
+  char g = number & 0x40;
+  char h = number & 0x80;
+
+//устанавливаем максимальное значение старшего разряда
+    h = h^0x80-0x01;
+
+  // меняем местами значения по разрядам
+
+    char tmp = 0;
+    tmp = a; a = h; h = tmp;
+    tmp = b; b = g; g = tmp;
+    tmp = c; c = f; f = tmp;
+    tmp = d; d = e; e = tmp;
+
+//проставляем нули там где были единицы и наоборот
+
+number=(a+b+c+d+e+f+g+h)^0xff;
+
+   return number;
+}
+
+void main()
+{
+    FILE *input1, *input2, *output;
+
+// подключение файлов
+    input1 = fopen("/home/vasiliy/change/test/task3_1/binaryData1.info", "rb"); //Не забудьте проверить путь
+    input2 = fopen("/home/vasiliy/change/test/task3_1/binaryData2.info", "rb"); //Не забудьте проверить путь
+
+// проверка доступности
+
+   if ((input1 == NULL)|(input2 == NULL)|(output == NULL))
+	{
+        printf("Error opening file");
+        getchar();
+        exit(ERROR_FILE_OPEN);
+    }
+    printf("Files successfully open\n");
+// считывание размера первого файла
+	fseek(input1 , 0 , SEEK_END); // установка указателя в конец файла
+  	int in1Size = ftell(input1);  // получение размера
+    fseek(input1 , 0 , SEEK_SET); // возврат указателя в начало
+// считывание размера второго файла
+	fseek(input2 , 0 , SEEK_END); // установка указателя в конец файла
+  	int in2Size = ftell(input2);  // получение размера
+	fseek(input2 , 0 , SEEK_SET); // возврат указателя в начало
+
+	int max=(in1Size>in2Size) ? in1Size : in1Size;
+
+	char bin1[max],bin2[max],result[max],invert[max];
+	fread(&bin1, 1, in1Size, input1);
+	fclose(input1);
+	fread(&bin2, 1, in2Size, input2);
+	fclose(input2);
+
+for (i=0; i<max; i++)
+	{
+result[i]=bin1[i]|bin2[i];
+invert[i]=ReverseBits(result[i]);
+	}
+	output = fopen("/home/vasiliy/change/test/task3_1/unionBinaryData2.info", "wb"); //Не забудьте проверить путь
+	fwrite(&invert, 1, max, output);
+	fclose(output);
+    printf("File unionBinaryData.info successfuly created. Press Enter");
+    getchar();
+}
